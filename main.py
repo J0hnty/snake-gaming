@@ -41,7 +41,7 @@ scorePosY = 30
 
 def snake(snakeBlock, snakeList):
     for x in snakeList:
-        print("snake")
+        # print("snake")
         pygame.draw.rect(screen, "green", [x[0], x[1], snakeBlock, snakeBlock])
 
 
@@ -90,12 +90,12 @@ def gameLoop():
     foodx = round(random.randrange(0, screenWidth - snakeBlock) / 10.0) * 10
     foody = round(random.randrange(0, screenHeight - snakeBlock) / 10.0) * 10
 
-    lenghtofSnake = 1
+    lenghtofSnake = 2
     highscore = 0
-    screen.fill(darkGreen)
     message(f"score: {lenghtofSnake - 1}", white, "score")
 
     while not game_over:
+        screen.fill(darkGreen)
 
         while game_end:
             screen.fill(purple)
@@ -154,17 +154,19 @@ def gameLoop():
 
         if x1 == foodx and y1 == foody:
             print("Lekka!!")
+            print(snakeList)
             lenghtofSnake += 1
             if lenghtofSnake:
                 spawnFood()
                 print("update")
-                foodx = round(random.randrange(0, screenWidth - snakeBlock) / 10.0) * 10
-                foody = round(random.randrange(0, screenHeight - snakeBlock) / 10.0) * 10
+                foodx = round(random.randrange(0, screenWidth - 50) / 10.0) * 10
+                foody = round(random.randrange(0, screenHeight - 50) / 10.0) * 10
                 screen.fill(darkGreen)
                 message(f"score: {lenghtofSnake - 1}", white, "score")
 
         # framerate set to 30fps
         clock.tick(snakeSpeed)  # limits FPS to 30
+
 
     pygame.quit()
     quit()
