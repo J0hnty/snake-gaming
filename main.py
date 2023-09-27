@@ -3,7 +3,6 @@ import random
 
 pygame.init()
 
-
 # colors used in game
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -40,6 +39,7 @@ loseFont = pygame.font.SysFont(None, 50)
 scoreFont = pygame.font.SysFont(None, 30)
 
 
+
 def message(msg, color, typeMsg):
     posX = 0
     PosY = 0
@@ -64,7 +64,19 @@ def message(msg, color, typeMsg):
     # opgelost met behulp van deze pagina: https://stackoverflow.com/questions/23982907/how-to-center-text-in-pygame
 
 
-def gameloop():
+def snake(snakeBlock, snakeList):
+    for x in snakeList:
+        print("snake")
+        # pygame.draw.rect(screen, "green", [x[0]][x[1]], snakeBlock, snakeBlock)
+
+
+def spawnFood():
+    foodx = round(random.randrange(0, screenWidth - snakeBlock) / 10.0) * 10
+    foody = round(random.randrange(0, screenHeight - snakeBlock) / 10.0) * 10
+    pygame.draw.rect(screen, red, [foodx, foody, snakeBlock, snakeBlock])
+
+
+def gameLoop():
     game_over = False
     game_end = False
 
@@ -74,13 +86,15 @@ def gameloop():
     x1_change = 0
     y1_change = 0
 
+    snakeList = []
+
     foodx = round(random.randrange(0, screenWidth - snakeBlock) / 10.0) * 10
     foody = round(random.randrange(0, screenHeight - snakeBlock) / 10.0) * 10
 
-    points = 0
+    lenghtofSnake = 1
     highscore = 0
-    screen.fill("darkGreen")
-    message(f"score: {points}", white, "score")
+    screen.fill(darkGreen)
+    message(f"score: {lenghtofSnake - 1}", white, "score")
 
     while not game_over:
 
@@ -93,13 +107,13 @@ def gameloop():
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
-                        if points > highscore:
-                            highscore = points
-                        points = 0
+                        if lenghtofSnake > highscore:
+                            highscore = lenghtofSnake
+                        lenghtofSnake = 0
                         game_over = True
                         game_end = False
                     if event.key == pygame.K_t:
-                        gameloop()
+                        gameLoop()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -126,12 +140,30 @@ def gameloop():
         y1 += y1_change
         pygame.draw.rect(screen, red, [foodx, foody, snakeBlock, snakeBlock])
         pygame.draw.rect(screen, green, [x1, y1, snakeBlock, snakeBlock])
+        snakeHead = []
+        snakeHead.append(x1)
+        snakeHead.append(y1)
+        snakeList.append(snakeHead)
+        if len(snakeList) >= lenghtofSnake:
+            del snakeList[0]
+
+        for x in snakeList[:-1]:
+            if x == snakeHead:
+                game_end = True
+
+        snake(snakeBlock, snakeList)
         pygame.display.update()
 
         if x1 == foodx and y1 == foody:
             print("Lekka!!")
-            points += 1
-            a = pygame.event.get()
+            lenghtofSnake += 1
+            if lenghtofSnake:
+                spawnFood()
+                print("update")
+                foodx = round(random.randrange(0, screenWidth - snakeBlock) / 10.0) * 10
+                foody = round(random.randrange(0, screenHeight - snakeBlock) / 10.0) * 10
+                screen.fill(darkGreen)
+                message(f"score: {lenghtofSnake - 1}", white, "score")
 
         # framerate set to 30fps
         clock.tick(snakeSpeed)  # limits FPS to 30
@@ -140,4 +172,4 @@ def gameloop():
     quit()
 
 
-gameloop()
+gameLoop()
