@@ -15,14 +15,6 @@ darkGreen = (25, 54, 25)
 screenWidth = 800
 screenHeight = 600
 
-# position for the loss message
-lossPosX = screenWidth // 2
-lossPosY = screenHeight // 2
-
-# position for the score message
-scorePosX = 30
-scorePosY = 30
-
 # setting the size of the screen and the "gamename" in this case that I made the game
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption('snake game by Johnty')
@@ -38,6 +30,19 @@ snakeSpeed = 20
 loseFont = pygame.font.SysFont(None, 50)
 scoreFont = pygame.font.SysFont(None, 30)
 
+# position for the loss message
+lossPosX = screenWidth // 2
+lossPosY = screenHeight // 2
+
+# position for the score message
+scorePosX = 30
+scorePosY = 30
+
+
+def snake(snakeBlock, snakeList):
+    for x in snakeList:
+        print("snake")
+        pygame.draw.rect(screen, "green", [x[0], x[1], snakeBlock, snakeBlock])
 
 
 def message(msg, color, typeMsg):
@@ -62,12 +67,6 @@ def message(msg, color, typeMsg):
     # what it did now was center the starting point of the text instead of the entire string
     # screen.blit(text, [screenWidth // 2, screenHeight // 2])
     # opgelost met behulp van deze pagina: https://stackoverflow.com/questions/23982907/how-to-center-text-in-pygame
-
-
-def snake(snakeBlock, snakeList):
-    for x in snakeList:
-        print("snake")
-        # pygame.draw.rect(screen, "green", [x[0]][x[1]], snakeBlock, snakeBlock)
 
 
 def spawnFood():
@@ -109,7 +108,7 @@ def gameLoop():
                     if event.key == pygame.K_q:
                         if lenghtofSnake > highscore:
                             highscore = lenghtofSnake
-                        lenghtofSnake = 0
+                        lenghtofSnake = 1
                         game_over = True
                         game_end = False
                     if event.key == pygame.K_t:
@@ -133,7 +132,6 @@ def gameLoop():
                     x1_change = 0
 
         if x1 >= screenWidth or x1 <= 0 or y1 >= screenHeight or y1 <= 0:
-            # game_over = True
             game_end = True
 
         x1 += x1_change
