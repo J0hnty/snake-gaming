@@ -1,5 +1,20 @@
+import json
+
 import pygame
 import random
+
+high_scoreJson = {
+    "name": "Jaap",
+    "highscore": 100
+}
+try:
+    with open('high_scores.json') as highScore_file:
+        high_scoreJson = json.load(highScore_file)
+except:
+    print('no file')
+
+high_score = high_scoreJson.get('highscore', 5)
+print("this is the highscore inside the .json file", high_score)
 
 pygame.init()
 
@@ -8,6 +23,7 @@ white = (255, 255, 255)
 black = (0, 0, 0)
 red = (255, 0, 0)
 green = (0, 255, 0)
+blue = (0, 0, 255)
 purple = (71, 21, 69)
 darkGreen = (25, 54, 25)
 
@@ -39,6 +55,10 @@ scorePosX = 30
 scorePosY = 30
 
 
+def __init__():
+    pass
+
+
 def snake(snakeBlock, snakeList):
     for x in snakeList:
         # print("snake")
@@ -48,6 +68,7 @@ def snake(snakeBlock, snakeList):
 def message(msg, color, typeMsg):
     posX = 0
     PosY = 0
+
     if typeMsg == "loss":
         posX = lossPosX
         posY = lossPosY
@@ -62,6 +83,14 @@ def message(msg, color, typeMsg):
         textRect = text.get_rect()
         textRect.topleft = posX, posY
         screen.blit(text, textRect)
+    elif typeMsg == "highScore":
+        posX = scorePosX + 300
+        posY = scorePosY
+        text = scoreFont.render("high score: " + msg, True, color)
+        textRect = text.get_rect()
+        textRect.topleft = posX, posY
+        screen.blit(text, textRect)
+
     # instead of the line code under the text
     # I had to use the Rect that made the rectangle center first then put the variable textRect in the screen.blit()
     # what it did now was center the starting point of the text instead of the entire string
@@ -75,7 +104,16 @@ def spawnFood():
     pygame.draw.rect(screen, red, [foodx, foody, snakeBlock, snakeBlock])
 
 
+# def highScore(points, highscore):
+#     if points >= highscore:
+#         highscore = points
+#         print(f"points: {points}")
+#         print(f"high score: {highscore}")
+
+
 def gameLoop():
+    global high_score
+
     game_over = False
     game_end = False
 
@@ -92,8 +130,8 @@ def gameLoop():
 
     lenghtofSnake = 2
     lastInput = None
+
     score = (lenghtofSnake - 2) * 100
-    highscore = 0
     message(str(score), white, "score")
 
     while not game_over:
@@ -103,15 +141,22 @@ def gameLoop():
 
         while game_end:
             screen.fill(purple)
+            message(str(score), white, "score")
+            message(str(high_score), darkGreen, "highScore")
             message("You lost! press Q to quit or T to try again", red, "loss")
-
+            if score > high_score:
+                # highScore(score, high_score)
+                high_score = score
+                highscoreJson = {'highscore': high_score}
+                print("ingame highscore:", high_score, "in json string highscore:", highscoreJson)
+                with open('high_scores.json', 'w') as highScore_file:
+                    json.dump(highscoreJson, highScore_file, indent=4)
+                print(lenghtofSnake)
             pygame.display.update()
 
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
-                        if lenghtofSnake > highscore:
-                            highscore = score
                         lenghtofSnake = 2
                         game_over = True
                         game_end = False
