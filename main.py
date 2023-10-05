@@ -40,7 +40,7 @@ clock = pygame.time.Clock()
 
 # player probs
 snakeBlock = 10
-snakeSpeed = 15
+snakeSpeed = 10
 
 # fonts
 loseFont = pygame.font.SysFont(None, 50)
@@ -53,10 +53,6 @@ lossPosY = screenHeight // 2
 # position for the score message
 scorePosX = 30
 scorePosY = 30
-
-
-def __init__():
-    pass
 
 
 def snake(snakeBlock, snakeList):
@@ -187,6 +183,8 @@ def gameLoop():
                         y1_change = snakeBlock
                         x1_change = 0
                         lastInput = "DOWN"
+                elif event.key == pygame.K_p:
+                    lenghtofSnake += 1
         if x1 >= screenWidth or x1 <= 0 or y1 >= screenHeight or y1 <= 0:
             game_end = True
 
