@@ -13,8 +13,10 @@ try:
 except:
     print('no file')
 
-high_score = high_scoreJson.get('highscore', 5)
-print("this is the highscore inside the .json file", high_score)
+leaderboard = high_scoreJson["leaderboard"]
+print("this is the highscore inside the .json file", leaderboard)
+
+array = []
 
 pygame.init()
 
@@ -26,6 +28,7 @@ green = (0, 255, 0)
 blue = (0, 0, 255)
 purple = (71, 21, 69)
 darkGreen = (25, 54, 25)
+midGreen = (15, 115, 35)
 
 # screen size
 screenWidth = 800
@@ -54,6 +57,18 @@ lossPosY = screenHeight // 2
 scorePosX = 30
 scorePosY = 30
 
+high_score = 0
+
+
+def scoreDisplay():
+    temp = []
+    for score in leaderboard:
+        temp.append(score["score"])
+
+    temp.sort(reverse=True)
+    print(temp)
+    return temp
+
 
 def snake(snakeBlock, snakeList):
     for x in snakeList:
@@ -62,6 +77,11 @@ def snake(snakeBlock, snakeList):
 
 
 def message(msg, color, typeMsg):
+    """
+    https://www.reddit.com/r/pygame/comments/ezohr9/how_do_i_add_multiline_text_in_pygame/
+    gebruiken voor het reworkden van het printen van tekst op het scherm
+
+    """
     posX = 0
     PosY = 0
 
@@ -80,8 +100,8 @@ def message(msg, color, typeMsg):
         textRect.topleft = posX, posY
         screen.blit(text, textRect)
     elif typeMsg == "highScore":
-        posX = scorePosX + 300
-        posY = scorePosY
+        posX = scorePosX
+        posY = scorePosY + 30
         text = scoreFont.render("high score: " + msg, True, color)
         textRect = text.get_rect()
         textRect.topleft = posX, posY
@@ -108,7 +128,9 @@ def spawnFood():
 
 
 def gameLoop():
-    global high_score
+    global high_score, snakeSpeed
+
+    firstTimeScoreCheck = True
 
     game_over = False
     game_end = False
@@ -118,6 +140,8 @@ def gameLoop():
 
     x1_change = 0
     y1_change = 0
+
+    cheat_counter = 0
 
     snakeList = []
 
@@ -137,16 +161,26 @@ def gameLoop():
 
         while game_end:
             screen.fill(purple)
+            if firstTimeScoreCheck:
+                print("W")
+                array = scoreDisplay()
+                firstTimeScoreCheck = False
             message(str(score), white, "score")
-            message(str(high_score), darkGreen, "highScore")
+            message(str(array[0]) + ", " +
+                    str(array[1]) + ", " +
+                    str(array[2]) + ", " +
+                    str(array[3]) + ", " +
+                    str(array[4]), midGreen, "highScore")
             message("You lost! press Q to quit or T to try again", red, "loss")
             if score > high_score:
                 # highScore(score, high_score)
                 high_score = score
-                highscoreJson = {'highscore': high_score}
-                print("ingame highscore:", high_score, "in json string highscore:", highscoreJson)
+                newhighscore = {'score': high_score}
+                print("ingame highscore:", high_score, "in json string highscore:", newhighscore)
+                high_scoreJson["leaderboard"].append(newhighscore)
+                print(high_scoreJson)
                 with open('high_scores.json', 'w') as highScore_file:
-                    json.dump(highscoreJson, highScore_file, indent=4)
+                    json.dump(high_scoreJson, highScore_file, indent=2)
                 print(lenghtofSnake)
             pygame.display.update()
 
@@ -185,6 +219,19 @@ def gameLoop():
                         lastInput = "DOWN"
                 elif event.key == pygame.K_p:
                     lenghtofSnake += 1
+                    cheat_counter = cheat_counter + 1
+                    print("you sneeky cheater. times cheated", cheat_counter)
+                elif event.key == pygame.K_q:
+                    snakeSpeed = 20
+                    print("speed up")
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_q:
+                    snakeSpeed = 10
+                    print("speed down")
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                lenghtofSnake += 1
+                cheat_counter = cheat_counter + 1
+                print("you sneeky cheater. times cheated", cheat_counter)
         if x1 >= screenWidth or x1 <= 0 or y1 >= screenHeight or y1 <= 0:
             game_end = True
 
