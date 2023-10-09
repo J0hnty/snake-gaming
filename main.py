@@ -1,7 +1,9 @@
 import json
-
-import pygame
 import random
+import os
+import pygame
+from pygame.sprite import Sprite, Group
+from itertools import count as iter_count
 
 high_scoreJson = {
     "name": "Jaap",
@@ -60,13 +62,189 @@ scorePosY = 30
 high_score = 0
 
 
+class Text(Sprite):
+    # @anchor uses rect position
+    def __init__(self, text, font, color, position, anchor="topleft"):
+        Sprite.__init__(self)
+        self._text = text
+        self._font = font
+        self._color = color
+        self._position = position
+        self._anchor = anchor
+        self.render()
+
+    def render(self):
+        self.image = self._font.render(self._text, 1, self._color)
+        self.rect = self.image.get_rect(**{self._anchor: self._position})
+
+
+class MultiText(Sprite):
+    # @anchor uses rect position
+    def __init__(self, texts, font, color, position, anchor="topleft"):
+        Sprite.__init__(self)
+        self._texts = texts
+        self._font = font
+        self._color = color
+        self._position = position
+        self._anchor = anchor
+        self.render()
+
+    def render(self):
+        width, height = 0, 0
+        for text in self._texts:
+            height += self._font.get_linesize()
+            w, _ = self._font.size(text)
+            if w > width:
+                width = w
+
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.image.fill((0, 0, 0, 0))
+        self.rect = self.image.get_rect(**{self._anchor: self._position})
+        line = iter_count(0, self._font.get_linesize())
+        for text in self._texts:
+            image = self._font.render(text, 1, self._color)
+            self.image.blit(image, (0, next(line)))
+
+
+# Interface
+class Scene:
+    def __init__(self, manager):
+        self.manager = manager
+
+    def on_draw(self, surface): pass
+
+    def on_event(self, event): pass
+
+    def on_update(self, delta): pass
+
+    def on_quit(self):
+        self.manager.quit()
+
+
+# Handles what scene is active
+class Manager:
+    def __init__(self, center=True, flags=0):
+        if center:
+            os.environ['SDL_VIDEO_CENTERED'] = '1'
+
+        # Basic pygame setup
+        self.surface = pygame.display.set_mode((screenWidth, screenHeight), flags)
+        self.rect = self.surface.get_rect()
+        self.running = False
+
+        self.scene = Scene(self)
+
+    def mainloop(self):
+        self.running = True
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.scene.on_quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        lenghtofSnake = 2
+                        print("quit")
+                        game_over = True
+                        game_end = False
+                        pygame.quit()
+                    if event.key == pygame.K_t:
+                        gameLoop()
+                else:
+                    self.scene.on_event(event)
+
+            self.scene.on_update(clock)
+            self.scene.on_draw(self.surface)
+            pygame.display.flip()
+
+    def quit(self):
+        self.running = False
+
+
+class MainScene(Scene):
+    def __init__(self, manager, typeMsg, game_end, score):
+        Scene.__init__(self, manager)
+        self.sprites = Group()
+        self.loseFont = pygame.font.SysFont(None, 50)
+        self.font_48 = pygame.font.Font(None, 48)
+        self.font_40 = pygame.font.Font(None, 40)
+        self.font_36 = pygame.font.Font(None, 36)
+        self.scoreFont = pygame.font.SysFont(None, 30)
+        self.font_28 = pygame.font.Font(None, 28)
+        self.font_18 = pygame.font.Font(None, 18)
+        self.font_14 = pygame.font.Font(None, 14)
+        self.create_texts(typeMsg, game_end, score)
+
+    def create_texts(self, typeMsg, game_end, score):
+        # tempText = "has to go in the method"
+        lossText = ["You lost!", "press Q to quit or", "T to try again"]
+        scoreText = ["score: " + str(score)]
+        highScoreIntList = scoreDisplay()
+        highScoresText = [str(x) for x in highScoreIntList[0:9]]
+        highScoreText = ["high score:"]
+        print("strings in list", highScoresText)
+        lossOffset = (0, 50)
+        scoreOffset = (30, 30)
+        highScoresOffset = (0, 50)
+        lossPosition = pygame.Vector2(self.manager.rect.center) + pygame.Vector2(lossOffset)
+        scorePosition = pygame.Vector2(self.manager.rect.topleft) + pygame.Vector2(scoreOffset)
+        highScoresPosition = pygame.Vector2(self.manager.rect.centerx) + pygame.Vector2(highScoresOffset)
+        if game_end:
+            self.sprites.add(
+                MultiText(lossText,
+                          self.loseFont, pygame.Color(red),
+                          lossPosition, "center"))
+            self.sprites.add(
+                MultiText(scoreText,
+                          self.scoreFont, pygame.Color(white),
+                          scorePosition, "topleft"))
+            self.sprites.add(
+                MultiText(highScoreText + highScoresText,
+                          self.font_36, pygame.Color(darkGreen),
+                          self.manager.rect.centerx, "centerx"))
+            # self.sprites.add(
+            #     MultiText(highScoresText,
+            #               self.font_28, pygame.Color(darkGreen),
+            #               highScoresPosition, "centerx"))
+
+        else:
+            pass
+
+        # if typeMsg == "loss":
+        #     pass
+        # elif typeMsg == "score\n s":
+        #     for item in text:
+        #         self.sprites.add(Text(item, self.font_14, pygame.Color(color), (0, next(line))))
+        # elif typeMsg == "highScore\n h":
+        #     pass
+
+        # text = ["Hello World !", "This is an example.", "Of a mulittext line"]
+        #
+        # text = "Hello World !\nThis is an example.\nOf a mulittext line"
+        # text = text.split('\n')
+
+        # Or you can do it with single lines of text
+        # line = iter_count(0, self.font_14.get_linesize())
+        # for item in text:
+        #     self.sprites.add(Text(item, self.font_40, pygame.Color(color), (0, next(line))))
+
+    def on_draw(self, surface):
+        surface.fill(pygame.Color(85, 39, 105))
+        self.sprites.draw(surface)
+
+
+def main(typeMsg, game_end, score):
+    manager = Manager()
+    manager.scene = MainScene(manager, typeMsg, game_end, score)
+    manager.mainloop()
+
+
 def scoreDisplay():
     temp = []
     for score in leaderboard:
         temp.append(score["score"])
 
     temp.sort(reverse=True)
-    print(temp)
+    print("ints", temp)
     return temp
 
 
@@ -80,51 +258,30 @@ def message(msg, color, typeMsg):
     """
     https://www.reddit.com/r/pygame/comments/ezohr9/how_do_i_add_multiline_text_in_pygame/
     gebruiken voor het reworkden van het printen van tekst op het scherm
-
     """
     posX = 0
     PosY = 0
 
-    if typeMsg == "loss":
-        posX = lossPosX
-        posY = lossPosY
-        text = loseFont.render(msg, True, color)
-        textRect = text.get_rect()
-        textRect.center = (posX, posY)
-        screen.blit(text, textRect)
-    elif typeMsg == "score":
+    if typeMsg == "score":
         posX = scorePosX
         posY = scorePosY
         text = scoreFont.render("score: " + msg, True, color)
         textRect = text.get_rect()
         textRect.topleft = posX, posY
         screen.blit(text, textRect)
-    elif typeMsg == "highScore":
-        posX = scorePosX
-        posY = scorePosY + 30
-        text = scoreFont.render("high score: " + msg, True, color)
-        textRect = text.get_rect()
-        textRect.topleft = posX, posY
-        screen.blit(text, textRect)
+
 
     # instead of the line code under the text
     # I had to use the Rect that made the rectangle center first then put the variable textRect in the screen.blit()
     # what it did now was center the starting point of the text instead of the entire string
     # screen.blit(text, [screenWidth // 2, screenHeight // 2])
-    # opgelost met behulp van deze pagina: https://stackoverflow.com/questions/23982907/how-to-center-text-in-pygame
+    # fixed with this page: https://stackoverflow.com/questions/23982907/how-to-center-text-in-pygame
 
 
 def spawnFood():
     foodx = round(random.randrange(0, screenWidth - 50) / 10.0) * 10
     foody = round(random.randrange(0, screenHeight - 50) / 10.0) * 10
     pygame.draw.rect(screen, red, [foodx, foody, snakeBlock, snakeBlock])
-
-
-# def highScore(points, highscore):
-#     if points >= highscore:
-#         highscore = points
-#         print(f"points: {points}")
-#         print(f"high score: {highscore}")
 
 
 def gameLoop():
@@ -160,19 +317,19 @@ def gameLoop():
         message(str(score), white, "score")
 
         while game_end:
-            screen.fill(purple)
             if firstTimeScoreCheck:
                 print("W")
                 array = scoreDisplay()
                 firstTimeScoreCheck = False
-            message(str(score), white, "score")
-            message(str(array[0]) + ", " +
-                    str(array[1]) + ", " +
-                    str(array[2]) + ", " +
-                    str(array[3]) + ", " +
-                    str(array[4]), midGreen, "highScore")
-            message("You lost! press Q to quit or T to try again", red, "loss")
-            if score > high_score:
+            # message(str(score), white, "score")
+            # message(str(array[0]) + ", " +
+            #         str(array[1]) + ", " +
+            #         str(array[2]) + ", " +
+            #         str(array[3]) + ", " +
+            #         str(array[4]), midGreen, "highScore")
+            # message("You lost! press Q to quit or T to try again", red, "loss")
+
+            if score >= high_score or score <= high_score:
                 # highScore(score, high_score)
                 high_score = score
                 newhighscore = {'score': high_score}
@@ -182,6 +339,7 @@ def gameLoop():
                 with open('high_scores.json', 'w') as highScore_file:
                     json.dump(high_scoreJson, highScore_file, indent=2)
                 print(lenghtofSnake)
+            main("highScore", game_end, score)
             pygame.display.update()
 
             for event in pygame.event.get():
